@@ -1,10 +1,17 @@
 #include <datatypes.h>
+#include <WiFiClient.h>
 #include <utils.h>
+#include <string>
 #include <FastBot.h>
+#include <ESP8266HTTPClient.h>
+#include <ESP8266WiFi.h>
 #define WIFI_SSID "TP-Link_AC5C"
 #define WIFI_PASS "99931728"
 #define BOT_TOKEN "6435083940:AAGMSQN1fn1891vLicfYMAGbLk0cDCq_LjM"
 FastBot bot(BOT_TOKEN);
+HTTPClient http;
+WiFiClient wifiClient;
+
 //переменные
 String monday[8] = { "0.Разговор о важном", "1.Алгебра", "2.Англ.яз", "3.ТВИС", "4.Алгебра", "5.История", "6.Литература", "7.Физика" };
 String tuesday[8] = { "0", "1.Геометрия", "2.Физ-ра", "3.Русский яз.", "4.Общество", "5.Физика", "6.Биология", "7.Индивидуальный проект" };
@@ -18,7 +25,6 @@ void setup() {
   connectWiFi();
   bot.attach(new2Msg);
 }
-
 
 
 void new2Msg(FB_msg& msg) {
@@ -165,7 +171,7 @@ void new2Msg(FB_msg& msg) {
     } else if ((t.hour == 12 && t.minute >= 5) or (t.hour == 13 && t.minute == 0)) {
       byte hour, minute;
       String ost;
-      hour = 13 * 60  - t.hour * 60 - t.minute;
+      hour = 13 * 60 - t.hour * 60 - t.minute;
       minute = hour % 60;
       hour = hour / 60;
       ost += hour;
@@ -196,15 +202,20 @@ void new2Msg(FB_msg& msg) {
       ost += "м";
       bot.sendMessage(ost, msg.chatID);
     } else bot.sendMessage("Уроков нет", msg.chatID);
-
-  } else {
-    FB_Time t(msg.unix, 3);
-    Serial.print(t.minute);
-    Serial.print(msg.chatID);  // ID чата
-    Serial.print(", ");
-    Serial.print(msg.username);  // логин
-    Serial.print(", ");
-    Serial.println(msg.text);  // текст
+  } else if (msg.text == "/post") {
+    http.begin(wifiClient, "https://school.07.edu.o7.com/auth/login-page");
+    http.addHeader("username", "/auth/login");
+    String httpRequestData = "Кобылянский2007";
+    int httpResponseCode = http.POST(httpRequestData);
+    http.addHeader("password", "/auth/login");
+    String httpRequestData2 = "CACnhWgb";
+    int httpResponseCode2 = http.POST(httpRequestData2);
+    String payload = http.getString();
+    String s = String(httpResponseCode, DEC);
+    String s2 = String(httpResponseCode2, DEC);
+    bot.sendMessage(s, msg.chatID);
+    bot.sendMessage(s2, msg.chatID);
+    bot.sendMessage(payload, msg.chatID);
   }
 }
 
@@ -228,4 +239,3 @@ void loop() {
   // put your main code here, to run repeatedly:
   bot.tick();
 }
-
