@@ -9,8 +9,6 @@
 #define WIFI_PASS "99931728"
 #define BOT_TOKEN "6435083940:AAGMSQN1fn1891vLicfYMAGbLk0cDCq_LjM"
 FastBot bot(BOT_TOKEN);
-HTTPClient http;
-WiFiClient wifiClient;
 
 //переменные
 String monday[8] = { "0.Разговор о важном", "1.Алгебра", "2.Англ.яз", "3.ТВИС", "4.Алгебра", "5.История", "6.Литература", "7.Физика" };
@@ -202,22 +200,9 @@ void new2Msg(FB_msg& msg) {
       ost += "м";
       bot.sendMessage(ost, msg.chatID);
     } else bot.sendMessage("Уроков нет", msg.chatID);
-  } else if (msg.text == "/post") {
-    http.begin(wifiClient, "https://school.07.edu.o7.com/auth/login-page");
-    http.addHeader("username", "/auth/login");
-    String httpRequestData = "Кобылянский2007";
-    int httpResponseCode = http.POST(httpRequestData);
-    http.addHeader("password", "/auth/login");
-    String httpRequestData2 = "CACnhWgb";
-    int httpResponseCode2 = http.POST(httpRequestData2);
-    String payload = http.getString();
-    String s = String(httpResponseCode, DEC);
-    String s2 = String(httpResponseCode2, DEC);
-    bot.sendMessage(s, msg.chatID);
-    bot.sendMessage(s2, msg.chatID);
-    bot.sendMessage(payload, msg.chatID);
   }
 }
+
 
 void connectWiFi() {  //подключение к интернету
   delay(2000);
