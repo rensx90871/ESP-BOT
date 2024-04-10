@@ -1,5 +1,6 @@
-#include <datatypes.h>
 #include <WiFiClient.h>
+#include <ArduinoJson.h>
+#include <datatypes.h>
 #include <utils.h>
 #include <string>
 #include <FastBot.h>
@@ -9,8 +10,9 @@
 #define WIFI_PASS "99931728"
 #define BOT_TOKEN "6435083940:AAGMSQN1fn1891vLicfYMAGbLk0cDCq_LjM"
 FastBot bot(BOT_TOKEN);
-
 //переменные
+String regionID = "20174";
+String serverPath = "https://yandex.com/time/sync.json?geo=" + regionID;
 String monday[8] = { "0.Разговор о важном", "1.Алгебра", "2.Англ.яз", "3.ТВИС", "4.Алгебра", "5.История", "6.Литература", "7.Физика" };
 String tuesday[8] = { "0", "1.Геометрия", "2.Физ-ра", "3.Русский яз.", "4.Общество", "5.Физика", "6.Биология", "7.Индивидуальный проект" };
 String wednesday[8] = { "0", "1", "2.Литература", "3.Англ.яз", "4.Геометрия", "5.Химия", "6.Физика", "7.История" };
@@ -18,6 +20,9 @@ String thursday[8] = { "0.Профмин", "1.Информатика", "2.Рус
 String friday[8] = { "0", "1.Англ.яз", "2.Литература", "3.География", "4.Физика", "5.Геометрия", "6.Физ-ра", "7.КНКБР" };
 String call[8] = { "0.08:00-08:20", "1.08:30-09:10", "2.09:20-10:00", "3.10:15-10:55", "4.11:10-11:50", "5.12:05-12:45", "6.13:00-13:40", "7.13:55-14:35" };
 
+StaticJsonDocument<1000> doc;
+WiFiClient client;
+HTTPClient http;
 
 void setup() {
   connectWiFi();
@@ -200,6 +205,50 @@ void new2Msg(FB_msg& msg) {
       ost += "м";
       bot.sendMessage(ost, msg.chatID);
     } else bot.sendMessage("Уроков нет", msg.chatID);
+  } else if (msg.text == "/weather") {
+    http.begin(client, serverPath);
+    int httpCode = http.GET();
+    if (httpCode > 0) {
+      String response = http.getString();
+      //bot.sendMessage(response, msg.chatID);
+      // Deserialize the JSON document
+      DeserializationError error = deserializeJson(doc, response);
+
+      // Проверяем успешность парсинга.
+      if (error) {
+        String errorStr = error.c_str();
+        bot.sendMessage(errorStr, msg.chatID);
+      } else {
+        //bot.sendMessage("deserializeJson() без ошибок.", msg.chatID);
+
+        long long time = doc["time"];  // 1673807964173
+        JsonObject clocks_20174 = doc["clocks"]["20174"];
+        int id = clocks_20174["id"];  // 20174
+        //bot.sendMessage(("ID=" + String(id)), msg.chatID);
+        const char* name = clocks_20174["name"];  //
+        bot.sendMessage(("Город: " + String(name)), msg.chatID);
+        const char* offsetString = clocks_20174["offsetString"];
+        bot.sendMessage(("Часовой пояс: " + String(offsetString)), msg.chatID);
+        const char* sunrise = clocks_20174["sunrise"];
+        bot.sendMessage(("Рассвет: " + String(sunrise)), msg.chatID);
+        const char* sunset = clocks_20174["sunset"];
+        bot.sendMessage(("Закат: " + String(sunset)), msg.chatID);
+
+        JsonObject clocks_20174_weather = clocks_20174["weather"];
+        int weather_temp = clocks_20174_weather["temp"];  // -5
+        bot.sendMessage(("Температура воздуха: " + String(weather_temp)), msg.chatID);
+        const char* clocks_20174_weather_icon = clocks_20174_weather["icon"];
+        const char* clocks_20174_weather_link = clocks_20174_weather["link"];
+
+        for (JsonObject clocks_20174_parent : clocks_20174["parents"].as<JsonArray>()) {
+          const char* parent_name = clocks_20174_parent["name"];
+          bot.sendMessage(("Местоположение: " + String(parent_name)), msg.chatID);
+        }
+      }
+    } else {
+      bot.sendMessage("http.GET() == 0", msg.chatID);
+    }
+    http.end();  //Закрываем соединение
   }
 }
 
