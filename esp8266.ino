@@ -6,9 +6,9 @@
 #include <FastBot.h>
 #include <ESP8266HTTPClient.h>
 #include <ESP8266WiFi.h>
-#define WIFI_SSID "TP-Link_AC5C"
-#define WIFI_PASS "99931728"
-#define BOT_TOKEN "6435083940:AAGMSQN1fn1891vLicfYMAGbLk0cDCq_LjM"
+#define WIFI_SSID "-"
+#define WIFI_PASS ""
+#define BOT_TOKEN ":"
 FastBot bot(BOT_TOKEN);
 //переменные
 String regionID = "20174";
