@@ -300,75 +300,47 @@ void new2Msg(FB_msg& msg) {
       bot.sendMessage(ost1, msg.chatID);
     } else bot.sendMessage("Уроков нет", msg.chatID);
   } else if (msg.text == "/weather") {
-    http.begin(client, serverPath);
-    int httpCode = http.GET();
-    if (httpCode > 0) {
-      String response = http.getString();
-      //bot.sendMessage(response, msg.chatID);
-      // Deserialize the JSON document
-      DeserializationError error = deserializeJson(doc, response);
-
-      // Проверяем успешность парсинга.
-      if (error) {
-        String errorStr = error.c_str();
-        bot.sendMessage(errorStr, msg.chatID);
-      } else {
-        //bot.sendMessage("deserializeJson() без ошибок.", msg.chatID);
-
-        long long time = doc["time"];  // 1673807964173
-        JsonObject clocks_20174 = doc["clocks"]["20174"];
-        int id = clocks_20174["id"];  // 20174
-        //bot.sendMessage(("ID=" + String(id)), msg.chatID);
-        const char* name = clocks_20174["name"];  //
-        bot.sendMessage(("Город: " + String(name)), msg.chatID);
-        const char* offsetString = clocks_20174["offsetString"];
-        bot.sendMessage(("Часовой пояс: " + String(offsetString)), msg.chatID);
-        const char* sunrise = clocks_20174["sunrise"];
-        bot.sendMessage(("Рассвет: " + String(sunrise)), msg.chatID);
-        const char* sunset = clocks_20174["sunset"];
-        bot.sendMessage(("Закат: " + String(sunset)), msg.chatID);
-
-        JsonObject clocks_20174_weather = clocks_20174["weather"];
-        int weather_temp = clocks_20174_weather["temp"];  // -5
-        bot.sendMessage(("Температура воздуха: " + String(weather_temp)), msg.chatID);
-        const char* clocks_20174_weather_icon = clocks_20174_weather["icon"];
-        const char* clocks_20174_weather_link = clocks_20174_weather["link"];
-
-        for (JsonObject clocks_20174_parent : clocks_20174["parents"].as<JsonArray>()) {
-          const char* parent_name = clocks_20174_parent["name"];
-          bot.sendMessage(("Местоположение: " + String(parent_name)), msg.chatID);
+    bot.sendMessage("Отправьте геолокацию", msg.chatID);
+    if (msg.location.latitude.length() > 0 && msg.location.longitude.length() > 0) {
+      bot.sendMessage("Lat: " + msg.location.latitude + ", Lon: " + msg.location.longitude, msg.chatID);
+      //String weather = "https://api.openweathermap.org/data/2.5/weather?lat=" + String(msg.location.latitude) + "&lon=" + String(msg.location.longitude) + "&units=metric&lang=ru&appid=" + API;
+      String url = "/data/2.5/weather?lat=" + msg.location.latitude + "&lon=" + msg.location.longitude + "&units=metric&lang=ru&appid=8b92943f5d8168a3668a52206d787396";
+      http.begin(client, "api.openweathermap.org", 80, url);
+      int httpCode = http.GET();
+      if (httpCode > 0) {
+        String spon = http.getString();
+        DeserializationError error = deserializeJson(wea, spon);
+        if (error) {
+          String errorStr = error.c_str();
+          bot.sendMessage(errorStr, msg.chatID);
+        } else {
+          //bot.sendMessage("deserializeJson() без ошибок.", msg.chatID);
+          //bot.sendMessage(spon, msg.chatID);
+          // Deserialize the JSON document
+          deserializeJson(wea, spon);
+          const char* locate = wea["name"];
+          bot.sendMessage(("Местоположение:" + String(locate)), msg.chatID);
+          //bot.sendMessage(url, msg.chatID);
+          const char* description = wea["weather"]["description"];
+          const char* smile = wea["weather"]["icon"];
+          if (smile == "01d" or smile == "01n") bot.sendMessage(("Погода:" + String(description) + "☀️"), msg.chatID);
+          else if (smile == "02d" or smile == "02n") bot.sendMessage(("Погода:" + String(description) + "⛅"), msg.chatID);
+          else if (smile == "03d" or smile == "03n" or smile == "04d" or smile == "04n") bot.sendMessage(("Погода:" + String(description) + "☁️"), msg.chatID);
+          else if (smile == "09d" or smile == "09n") bot.sendMessage(("Погода:" + String(description) + "⛈️"), msg.chatID);
+          else if (smile == "10d" or smile == "10n") bot.sendMessage(("Погода:" + String(description) + "🌧️"), msg.chatID);
+          else if (smile == "11d" or smile == "11n") bot.sendMessage(("Погода:" + String(description) + "🌩️"), msg.chatID);
+          else if (smile == "13d" or smile == "13n") bot.sendMessage(("Погода:" + String(description) + "❄️"), msg.chatID);
+          else if (smile == "50d" or smile == "50n") bot.sendMessage(("Погода:" + String(description) + "🌫️"), msg.chatID);
+          float temp = wea["main"]["temp"];
+          bot.sendMessage(("Температура:" + String(temp)), msg.chatID);
+          byte hum = wea["main"]["humidity"];
+          bot.sendMessage(("Влажность:" + String(hum)), msg.chatID);
+          http.end();
         }
-      }
-    } else {
-      bot.sendMessage("http.GET() == 0", msg.chatID);
-    }
-    http.end();  //Закрываем соединение
-  } else if (msg.location.latitude.length() > 0 && msg.location.longitude.length() > 0) {
-    bot.sendMessage("Lat: " + msg.location.latitude + ", Lon: " + msg.location.longitude, msg.chatID);
-    //String weather = "https://api.openweathermap.org/data/2.5/weather?lat=" + String(msg.location.latitude) + "&lon=" + String(msg.location.longitude) + "&units=metric&lang=ru&appid=" + API;
-    String url = "/data/2.5/weather?lat=" + msg.location.latitude + "&lon=" + msg.location.longitude + "&units=metric&lang=ru&appid=8b92943f5d8168a3668a52206d787396";
-    http.begin(client,"api.openweathermap.org",80,url );
-    int httpCode = http.GET();
-    if (httpCode > 0) {
-      String spon = http.getString();
-      DeserializationError error = deserializeJson(wea, spon);
-      if (error) {
-        String errorStr = error.c_str();
-        bot.sendMessage(errorStr, msg.chatID);
-      } else {
-        bot.sendMessage("deserializeJson() без ошибок.", msg.chatID);
-        bot.sendMessage(spon, msg.chatID);
-        // Deserialize the JSON document
-        deserializeJson(wea, spon);
-        const char* locate = wea["name"];
-        bot.sendMessage(("Местоположение:" + String(locate)), msg.chatID);
-        bot.sendMessage(url, msg.chatID);
-        http.end();
       }
     }
   }
 }
-
 
 void connectWiFi() {  //подключение к интернету
   delay(2000);
