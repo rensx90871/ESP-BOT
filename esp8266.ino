@@ -15,12 +15,13 @@ FastBot bot(BOT_TOKEN);
 String API = "8b92943f5d8168a3668a52206d787396";
 String regionID = "20174";
 String serverPath = "https://yandex.com/time/sync.json?geo=" + regionID;
-String monday[8] = { "0.Разговор о важном", "1.Алгебра", "2.Англ.яз", "3.ТВИС", "4.Алгебра", "5.История", "6.Литература", "7.Физика" };
-String tuesday[8] = { "0", "1.Геометрия", "2.Физ-ра", "3.Русский яз.", "4.Общество", "5.Физика", "6.Биология", "7.Индивидуальный проект" };
-String wednesday[8] = { "0", "1", "2.Литература", "3.Англ.яз", "4.Геометрия", "5.Химия", "6.Физика", "7.История" };
-String thursday[8] = { "0.Профмин", "1.Информатика", "2.Русский.яз", "3.ОБЖ", "4.Алгебра", "5.Алгебра", "6.Физика", "7.Общество" };
-String friday[8] = { "0", "1.Англ.яз", "2.Литература", "3.География", "4.Физика", "5.Геометрия", "6.Физ-ра", "7.КНКБР" };
-String call[8] = { "0.08:00-08:20", "1.08:30-09:10", "2.09:20-10:00", "3.10:15-10:55", "4.11:10-11:50", "5.12:05-12:45", "6.13:00-13:40", "7.13:55-14:35" };
+String monday[8] = { "0.Разговор о важном", "1.Алгебра", "2.История", "3.География", "4.Физика", "5.Физ-ра", "6.Алгебра", "7.Литература" };
+String tuesday[8] = { "0", "1.Русский язык", "2.Геометрия", "3.Физика", "4.Обществознание", "5.Геометрия", "6.Информатика", "7.Англ.яз" };
+String wednesday[7] = { "0", "1.Культура народов КБР", "2.Алгебра", "3.Физика", "4.Биология", "5.Физ-ра", "6.Русский язык" };
+String thursday[8] = { "0.Профмин", "1.Химия", "2.Физ-ра", "3.Алгебра", "4.Литература", "5.Англ.яз", "6.История", "7.Физика" };
+String friday[8] = { "0", "1.Обществознание", "2.ТВИС", "3.Геометрия", "4.Физика", "5.ОБЗР", "6.Англ.яз", "7.Литература" };
+String callm[8] = { "0.08:00-08:35", "1.08:40-09:20", "2.09:30-10:10", "3.10:25-11:05", "4.11:20-12:00", "5.12:15-12:55", "6.13:10-13:50", "7.14:00-14:40" };
+String call[7] = { "1.08:30-09:10", "2.09:20-10:00", "3.10:15-10:55", "4.11:10-11:50", "5.12:05-12:45", "6.13:00-13:40", "7.13:50-14:30" };
 StaticJsonDocument<1000> wea;
 WiFiClient client;
 HTTPClient http;
@@ -34,19 +35,18 @@ void setup() {
 
 void new2Msg(FB_msg& msg) {
   if (msg.OTA && msg.chatID == "718856532") bot.update();
-  else if (msg.text == "/start") {
-    bot.sendMessage("Привет, это бот созданный для физмата 10А класса", msg.chatID);
-  } else if (msg.text == "/lesson0schedule") {
+  else if (msg.text == "/start") bot.sendMessage("Привет, это бот созданный для физмата 11А класса", msg.chatID);
+  else if (msg.text == "/lesson0schedule") {
     FB_Time t(msg.unix, 3);  // передали unix и часовой пояс
     uint8_t day = t.dayWeek;
     if (day == 1) {
       int i;
-      for (i = 0; i < 8; i = i + 1) {
+      for (i = 0; i < 9; i = i + 1) {
         bot.sendMessage(monday[i], msg.chatID);
       }
     } else if (day == 2) {
       int i;
-      for (i = 0; i < 8; i = i + 1) {
+      for (i = 0; i < 9; i = i + 1) {
         bot.sendMessage(tuesday[i], msg.chatID);
       }
     } else if (day == 3) {
@@ -56,22 +56,33 @@ void new2Msg(FB_msg& msg) {
       }
     } else if (day == 4) {
       int i;
-      for (i = 0; i < 8; i = i + 1) {
+      for (i = 0; i < 9; i = i + 1) {
         bot.sendMessage(thursday[i], msg.chatID);
       }
     } else if (day == 5) {
       int i;
-      for (i = 0; i < 8; i = i + 1) {
+      for (i = 0; i < 9; i = i + 1) {
         bot.sendMessage(friday[i], msg.chatID);
       }
     } else if (day > 5) {
       bot.sendMessage("Уроков нет", msg.chatID);
     }
   } else if (msg.text == "/call0schedule") {
-    int i;
-    for (i = 0; i < 8; i = i + 1) {
-      bot.sendMessage(call[i], msg.chatID);
-    }
+    FB_Time t(msg.unix, 3);  // передали unix и часовой пояс
+    uint8_t day = t.dayWeek;
+    if (day != 6 && day != 7) {
+      if (day == 1) {
+        int i;
+        for (i = 0; i < 9; i = i + 1) {
+          bot.sendMessage(callm[i], msg.chatID);
+        }
+      } else {
+        int i;
+        for (i = 0; i < 8; i = i + 1) {
+          bot.sendMessage(call[i], msg.chatID);
+        }
+      }
+    } else bot.sendMessage("Уроков нет", msg.chatID);
   } else if (msg.text == "/next0lesson") {
     FB_Time t(msg.unix, 3);
     String d[8];
@@ -84,7 +95,7 @@ void new2Msg(FB_msg& msg) {
         d[i] = tuesday[i];
       }
     } else if (t.dayWeek == 3) {
-      for (int i = 0; i < 9; i++) {
+      for (int i = 0; i < 8; i++) {
         d[i] = wednesday[i];
       }
     } else if (t.dayWeek == 4) {
@@ -301,8 +312,8 @@ void new2Msg(FB_msg& msg) {
         bot.sendMessage(("Местоположение: " + String(locate)), msg.chatID);
         //bot.sendMessage(url, msg.chatID);
         JsonObject weather_0 = wea["weather"][0];
-        const char* description = weather_0["description"]; // "небольшой дождь"
-        const char* smile1 = weather_0["icon"]; // "10n"
+        const char* description = weather_0["description"];  // "небольшой дождь"
+        const char* smile1 = weather_0["icon"];              // "10n"
         String smile = smile1;
         if (smile == "01d" or smile == "01n") bot.sendMessage(("Погода: " + String(description) + " ☀️"), msg.chatID);
         else if (smile == "02d" or smile == "02n") bot.sendMessage(("Погода: " + String(description) + " ⛅"), msg.chatID);
